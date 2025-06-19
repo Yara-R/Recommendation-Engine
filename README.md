@@ -1,4 +1,4 @@
-# Recommendation-Engine
+# Recommendation Engine
 
 <p align="center">
 
@@ -15,4 +15,3 @@
   </a>
 
 </p>
-
