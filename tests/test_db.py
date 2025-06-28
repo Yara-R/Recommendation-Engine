@@ -12,6 +12,7 @@ from recommender.models import (
 
 AGE = 23
 
+
 def test_create_user(session, mock_db_time):
     with mock_db_time(model=User) as time:
         new_user = User(username='alice', gender='F', age=23)
