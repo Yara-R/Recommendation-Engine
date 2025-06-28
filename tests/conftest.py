@@ -1,16 +1,36 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
-from recommender.models import table_registry
+from recommender.app import app
+from recommender.database import get_session
+from recommender.models import Movie, User, table_registry
+
+
+@pytest.fixture
+def client(session):
+    def get_session_override():
+        return session
+
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_session_override
+        yield client
+
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def session():
-    engine = create_engine('sqlite:///:memory:')
+    engine = create_engine(
+        'sqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
@@ -37,3 +57,41 @@ def _mock_db_time(*, model, time=datetime(2024, 1, 1)):
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
+@pytest.fixture
+def user(session):
+    user = User(
+        username='Teste',
+        age=30,
+        gender='M',
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
+
+
+@pytest.fixture
+def movie(session):
+    filme = Movie(
+        title='Inception', genres='Sci-Fi', release_date=date(2010, 7, 16)
+    )
+    session.add(filme)
+    session.commit()
+    session.refresh(filme)
+
+    return filme
+
+
+@pytest.fixture
+def movie_nao_visto(session):
+    filme = Movie(
+        title='The Matrix', genres='Sci-Fi', release_date=date(1999, 3, 31)
+    )
+    session.add(filme)
+    session.commit()
+    session.refresh(filme)
+
+    return filme

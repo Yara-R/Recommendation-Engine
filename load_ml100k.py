@@ -1,16 +1,15 @@
-import os
 from datetime import datetime
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from recommender.models import (
     Movie,
-    MovieResponse,
     Sessions,
     User,
     UserMovieInteraction,
     table_registry,
 )
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 # Constantes para conversão de ratings
 MAX_RATING_NAO = 2
@@ -18,11 +17,13 @@ RATING_MAYBE = 3
 BATCH_SIZE = 1000
 PROGRESS_INTERVAL = 10000
 
+
 def parse_date(date_str):
     try:
-        return datetime.strptime(date_str, "%d-%b-%Y").date()
+        return datetime.strptime(date_str, '%d-%b-%Y').date()
     except Exception:
         return None
+
 
 def load_movies_data():
     """
@@ -38,8 +39,6 @@ def load_movies_data():
             movie_id = int(parts[0])
             title = parts[1]
             release_date = parse_date(parts[2])  # formato: dd-MMM-yyyy
-
-            
 
             # Extrair gêneros (últimas 19 colunas são gêneros binários)
             genre_columns = parts[5:]  # Pula os primeiros 5 campos
@@ -100,13 +99,12 @@ def load_users_data():
 
             # Criar username e email fictícios baseados no user_id
             username = f'user_{user_id}'
-    
 
             users_data.append({
                 'user_id': user_id,
                 'username': username,
                 'age': age,
-                'gender': gender
+                'gender': gender,
             })
 
     return users_data
@@ -131,11 +129,11 @@ def load_ratings_data():
             # Converter rating para MovieResponse
             # Rating 1-2: nao, Rating 3: nao_mas_quero, Rating 4-5: sim
             if rating <= MAX_RATING_NAO:
-                response = "nao"
+                response = 'nao'
             elif rating == RATING_MAYBE:
-                response = "nao_mas_quero"
+                response = 'nao_mas_quero'
             else:
-                response = "sim"
+                response = 'sim'
 
             ratings_data.append({
                 'user_id': user_id,
@@ -147,7 +145,7 @@ def load_ratings_data():
     return ratings_data
 
 
-def create_database_session(database_url='sqlite:///movielens.db'):
+def create_database_session(database_url='sqlite:///database.db'):
     """
     Cria a sessão do banco de dados
     """
@@ -168,7 +166,6 @@ def insert_movies(db_session, movies_data):
             title=movie_data['title'],
             release_date=movie_data['release_date'],
             genres=movie_data['genres'],
-            
         )
         db_session.add(movie)
 
@@ -258,7 +255,6 @@ def populate_database():
     """
     Popula o banco de dados com os dados do MovieLens
     """
- 
 
     print('Carregando dados dos arquivos...')
 

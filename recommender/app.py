@@ -1,18 +1,29 @@
-import random
+from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from recommender.database import get_db
+from recommender.database import get_session
 from recommender.models import (
     Movie,
-    MovieResponse,
     Sessions,
+    User,
     UserMovieInteraction,
 )
-from recommender.schemas import Message
+from recommender.schemas import (
+    EncerrarSessaoSchema,
+    Message,
+    MessageSchema,
+    MovieSchema,
+    RespostaRegistrada,
+    RespostaSchema,
+    SessaoResponse,
+    SessaoSchema,
+    UserList,
+    UserPublic,
+    UserSchema,
+)
 
 app = FastAPI()
 
@@ -22,91 +33,119 @@ def read_root():
     return {'message': 'Welcome to the Recommender API'}
 
 
-# CORS para frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+@app.post(
+    '/usuario/', status_code=HTTPStatus.CREATED, response_model=UserPublic
 )
+def criar_usuario(user: UserSchema, session: Session = Depends(get_session)):
+    db_user = session.scalar(
+        select(User).where((User.username == user.username))
+    )
+    if db_user:
+        if db_user.username == user.username:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Username already exists',
+            )
+    db_user = User(username=user.username, age=user.age, gender=user.gender)
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
 
-# Lista de métodos de recomendação simulados
-RECOMMENDATION_METHODS = [
-    'clustering',
-    'content_based',
-    'regression',
-    'collaborative',
-]
+    return db_user
 
 
-def recommend_movie(user_id: int, db: Session, method: str) -> Movie:
-    """Simula um sistema de recomendação usando métodos diversos"""
-    seen_movie_ids = db.scalars(
+@app.get('/usuario/', response_model=UserList)
+def read_users(
+    skip: int = 0, limit: int = 100, session: Session = Depends(get_session)
+):
+    users = session.scalars(select(User).offset(skip).limit(limit)).all()
+    return {'users': users}
+
+
+@app.post(
+    '/sessao', response_model=SessaoResponse, status_code=HTTPStatus.CREATED
+)
+def iniciar_sessao(
+    sessao: SessaoSchema, session: Session = Depends(get_session)
+):
+    user = session.get(User, sessao.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
+        )
+
+    nova_sessao = Sessions(user_id=sessao.user_id)
+    session.add(nova_sessao)
+    session.commit()
+    session.refresh(nova_sessao)
+
+    return {'session_id': nova_sessao.session_id}
+
+
+@app.get('/filme', response_model=MovieSchema)
+def recomendar_filme(user_id: int, session: Session = Depends(get_session)):
+    # Filmes já vistos pelo usuário
+    vistos = session.scalars(
         select(UserMovieInteraction.movie_id).where(
             UserMovieInteraction.user_id == user_id
         )
     ).all()
 
-    query = select(Movie).where(Movie.movie_id.notin_(seen_movie_ids))
-    result = db.scalars(query).all()
-    if not result:
+    filme = session.scalars(
+        select(Movie).where(Movie.movie_id.notin_(vistos)).limit(1)
+    ).first()
+
+    if not filme:
         raise HTTPException(
-            status_code=404, detail='No more movies to recommend'
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Nenhum filme para recomendar',
         )
-    return random.choice(result)  # simula recomendação
+
+    return filme
 
 
-@app.post('/start-session/{user_id}')
-def start_session(user_id: int, db: Session = Depends(get_db)):
-    session = Sessions(user_id=user_id)
-    db.add(session)
-    db.commit()
-    db.refresh(session)
-    return {'session_id': session.session_id}
-
-
-@app.get('/next-movie/{user_id}/{session_id}')
-def get_next_movie(
-    user_id: int, session_id: int, db: Session = Depends(get_db)
+@app.post(
+    '/responder',
+    response_model=RespostaRegistrada,
+    status_code=HTTPStatus.CREATED,
+)
+def registrar_resposta(
+    resposta: RespostaSchema, session: Session = Depends(get_session)
 ):
-    method = random.choice(RECOMMENDATION_METHODS)
-    movie = recommend_movie(user_id, db, method)
-    return {
-        'movie_id': movie.movie_id,
-        'title': movie.title,
-        'genres': movie.genres,
-        'method': method,
-    }
+    # Verificações básicas (opcional mas recomendado)
+    if not session.get(Sessions, resposta.session_id):
+        raise HTTPException(status_code=404, detail='Sessão não encontrada')
+    if not session.get(User, resposta.user_id):
+        raise HTTPException(status_code=404, detail='Usuário não encontrado')
+    if not session.get(Movie, resposta.movie_id):
+        raise HTTPException(status_code=404, detail='Filme não encontrado')
 
-
-@app.post('/respond')
-def record_response(
-    user_id: int,
-    session_id: int,
-    movie_id: int,
-    response: MovieResponse,
-    db: Session = Depends(get_db),
-):
-    interaction = UserMovieInteraction(
-        user_id=user_id,
-        session_id=session_id,
-        movie_id=movie_id,
-        response=response,
+    # Criar a interação
+    interacao = UserMovieInteraction(
+        session_id=resposta.session_id,
+        user_id=resposta.user_id,
+        movie_id=resposta.movie_id,
+        response=resposta.response,
     )
-    db.add(interaction)
+    session.add(interacao)
+    session.commit()
+    session.refresh(interacao)
 
-    session = db.get(Sessions, session_id)
-    session.responses_count += 1
-    db.commit()
-    return {'status': 'recorded', 'response': response.value}
+    return interacao
 
 
-@app.post('/end-session/{session_id}')
-def end_session(session_id: int, db: Session = Depends(get_db)):
-    session = db.get(Sessions, session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail='Session not found')
-    session.end_time = func.now()
-    db.commit()
-    return {'status': 'session ended'}
+@app.post('/desistir', response_model=MessageSchema, status_code=HTTPStatus.OK)
+def encerrar_sessao(
+    dados: EncerrarSessaoSchema,
+    session: Session = Depends(get_session),
+):
+    sessao = session.get(Sessions, dados.session_id)
+    if not sessao:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Sessão não encontrada'
+        )
+
+    sessao.end_time = func.now()
+    session.commit()
+
+    return {'message': 'Sessão encerrada'}

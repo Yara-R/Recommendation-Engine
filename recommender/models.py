@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime, date
+from datetime import date, datetime
 
 from sqlalchemy import Enum, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, registry, relationship
@@ -20,9 +20,11 @@ class MovieResponse(enum.Enum):
 class User:
     __tablename__ = 'users'
 
-    user_id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    username: Mapped[str] = mapped_column(unique=True)
-    age: Mapped[str]
+    user_id: Mapped[int] = mapped_column(
+        init=False, unique=True, primary_key=True
+    )
+    username: Mapped[str]
+    age: Mapped[int]
     gender: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
@@ -45,7 +47,6 @@ class Movie:
     title: Mapped[str]
     genres: Mapped[str]
     release_date: Mapped[date | None] = mapped_column(nullable=True)
-
 
     interactions: Mapped[list['UserMovieInteraction']] = relationship(
         back_populates='movie', init=False

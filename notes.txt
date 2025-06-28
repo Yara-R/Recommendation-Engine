@@ -1,0 +1,7 @@
+"""
+A estrutura de um teste, costuma contar com 3 ou 4 fases importantes.
+
+- A: Arrange (Organizar)
+- A: Act (Executa a coisa - o SUT- System Under Test)
+- A: Assert (garante que o resultado é o esperado)
+"""

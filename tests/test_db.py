@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 
 from recommender.models import (
@@ -9,7 +11,6 @@ from recommender.models import (
 )
 
 AGE = 23
-
 
 def test_create_user(session, mock_db_time):
     with mock_db_time(model=User) as time:
@@ -28,7 +29,9 @@ def test_create_user(session, mock_db_time):
 
 def test_create_movie(session):
     new_movie = Movie(
-        title='The Matrix', genres='Action|Sci-Fi', release_date='21-May-1999'
+        title='The Matrix',
+        genres='Action|Sci-Fi',
+        release_date=datetime.strptime('21-May-1999', '%d-%b-%Y').date(),
     )
     session.add(new_movie)
     session.commit()
@@ -38,11 +41,11 @@ def test_create_movie(session):
     assert movie is not None
     assert movie.title == 'The Matrix'
     assert movie.genres == 'Action|Sci-Fi'
-    assert movie.release == '21-May-1999'
+    assert movie.release_date == datetime(1999, 5, 21).date()
 
 
 def test_create_session(session, mock_db_time):
-    new_user = User(username='alice', password='secret', email='teste@test')
+    new_user = User(username='alice', gender='F', age=23)
     session.add(new_user)
     session.commit()
 
@@ -63,11 +66,15 @@ def test_create_session(session, mock_db_time):
 
 
 def test_interaction(session, mock_db_time):
-    new_user = User(username='alice', password='secret', email='teste@test')
+    new_user = User(username='alice', gender='F', age=23)
     session.add(new_user)
     session.commit()
 
-    new_movie = Movie(title='The Matrix', genres='Action|Sci-Fi')
+    new_movie = Movie(
+        title='The Matrix',
+        genres='Action|Sci-Fi',
+        release_date=datetime.strptime('21-May-1999', '%d-%b-%Y').date(),
+    )
     session.add(new_movie)
     session.commit()
 
