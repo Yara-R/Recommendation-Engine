@@ -1,7 +1,10 @@
 import enum
 from datetime import date, datetime
+from uuid import UUID as UUIDType
+from uuid import uuid4
 
 from sqlalchemy import Enum, ForeignKey, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, registry, relationship
 
 # Registro de mapeamento
@@ -23,9 +26,13 @@ class User:
     user_id: Mapped[int] = mapped_column(
         init=False, unique=True, primary_key=True
     )
-    username: Mapped[str]
     age: Mapped[int]
     gender: Mapped[str]
+
+    uuid: Mapped[UUIDType] = mapped_column(
+        UUID(as_uuid=True), unique=True, default=uuid4(), nullable=False
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
     )

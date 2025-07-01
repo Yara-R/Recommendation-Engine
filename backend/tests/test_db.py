@@ -15,14 +15,13 @@ AGE = 23
 
 def test_create_user(session, mock_db_time):
     with mock_db_time(model=User) as time:
-        new_user = User(username='alice', gender='F', age=23)
+        new_user = User(gender='F', age=23)
         session.add(new_user)
         session.commit()
 
-    user = session.scalar(select(User).where(User.username == 'alice'))
+    user = session.scalar(select(User).where(User.gender == 'F'))
 
     assert user.user_id == 1
-    assert user.username == 'alice'
     assert user.gender == 'F'
     assert user.age == AGE
     assert user.created_at == time
@@ -46,7 +45,7 @@ def test_create_movie(session):
 
 
 def test_create_session(session, mock_db_time):
-    new_user = User(username='alice', gender='F', age=23)
+    new_user = User(gender='F', age=23)
     session.add(new_user)
     session.commit()
 
@@ -67,7 +66,7 @@ def test_create_session(session, mock_db_time):
 
 
 def test_interaction(session, mock_db_time):
-    new_user = User(username='alice', gender='F', age=23)
+    new_user = User(gender='F', age=23)
     session.add(new_user)
     session.commit()
 

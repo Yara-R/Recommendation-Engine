@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from uuid import UUID
 
 
 def test_root(client):
@@ -9,38 +10,30 @@ def test_root(client):
 
 
 # Testes para o endpoint de criação e leitura de usuários
+
+AGE = 30
+
+
 def test_create_user(client):
     response = client.post(
         '/usuario/',
         json={
-            'username': 'alice',
-            'age': 30,
+            'age': AGE,
             'gender': 'F',
         },
     )
 
     assert response.status_code == HTTPStatus.CREATED
-    assert response.json() == {
-        'user_id': 1,
-        'username': 'alice',
-        'age': 30,
-        'gender': 'F',
-    }
 
+    data = response.json()
 
-def test_create_user_with_existing_username(client):
-    client.post(
-        '/usuario/',
-        json={'username': 'duplicado', 'age': 30, 'gender': 'F'},
-    )
+    # Confirma que o UUID retornado é válido
+    assert 'uuid' in data
+    assert isinstance(UUID(data['uuid']), UUID)
 
-    response = client.post(
-        '/usuario/',
-        json={'username': 'duplicado', 'age': 30, 'gender': 'F'},
-    )
-
-    assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json() == {'detail': 'Username already exists'}
+    # Confirma os outros campos
+    assert data['age'] == AGE
+    assert data['gender'] == 'F'
 
 
 def test_delete_user_should_return_not_found(client):
@@ -53,7 +46,7 @@ def test_delete_user_should_return_not_found(client):
 def test_update_user_should_return_not_found(client):
     response = client.put(
         '/usuario/10000',
-        json={'username': 'bob', 'age': 25, 'gender': 'M'},
+        json={'age': 25, 'gender': 'M'},
     )
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Not Found'}
@@ -77,7 +70,6 @@ def test_iniciar_sessao(client):
     response = client.post(
         '/usuario/',
         json={
-            'username': 'alice',
             'age': 30,
             'gender': 'F',
         },
@@ -160,11 +152,9 @@ def test_registrar_resposta_sessao_inexistente(client, user, movie):
 
 
 def test_registrar_resposta_usuario_inexistente_no_responder(client, movie):
-    response = client.post(
-        '/usuario/', json={'username': 'bob', 'age': 25, 'gender': 'M'}
-    )
+    response = client.post('/usuario/', json={'age': 25, 'gender': 'M'})
     assert response.status_code == HTTPStatus.CREATED
-    user_id = response.json()['user_id']
+    user_id = response.json()['user_id']  # <- agora presente
 
     response = client.post('/sessao', json={'user_id': user_id})
     assert response.status_code == HTTPStatus.CREATED

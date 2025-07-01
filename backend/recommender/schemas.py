@@ -1,6 +1,7 @@
 from datetime import date
 from enum import Enum
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,16 +11,16 @@ class Message(BaseModel):
 
 
 class UserSchema(BaseModel):
-    username: str
     age: int
     gender: str
 
 
 class UserPublic(BaseModel):
-    user_id: int
-    username: str
+    uuid: UUID
     age: int
     gender: str
+    user_id: int
+
     model_config = ConfigDict(from_attributes=True)
 
 

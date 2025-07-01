@@ -1,0 +1,39 @@
+<div class="container mt-4">
+  <h4 class="text-center mb-3">
+    Contagem de respostas positivas: 
+    <span class="badge bg-success">{{ contadorAssistidosOuQuer }}</span>
+  </h4>
+
+  <div *ngIf="!iniciouPesquisa">
+    <form (ngSubmit)="iniciarPesquisa()" class="w-50 mx-auto">
+      <div class="mb-3">
+        <label class="form-label">Idade:</label>
+        <input type="number" class="form-control" [(ngModel)]="idade" name="idade" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Gênero:</label>
+        <select class="form-select" [(ngModel)]="genero" name="genero" required>
+          <option value="" disabled selected>Selecione</option>
+          <option value="F">Feminino</option>
+          <option value="M">Masculino</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Iniciar</button>
+    </form>
+  </div>
+
+  <div *ngIf="iniciouPesquisa" class="text-center mt-5">
+    <h5>{{ filmeAtual }}</h5>
+    <p class="mt-2">Você já assistiu?</p>
+
+    <div class="d-grid gap-2 col-6 mx-auto">
+      <button class="btn btn-success" (click)="responder('sim')">Sim</button>
+      <button class="btn btn-danger" (click)="responder('nao')">Não</button>
+      <button class="btn btn-warning" (click)="responder('nao_mas_quero')">Não mas quero</button>
+    </div>
+
+    <button class="btn btn-outline-secondary mt-4" (click)="encerrar()">Encerrar pesquisa</button>
+  </div>
+</div>

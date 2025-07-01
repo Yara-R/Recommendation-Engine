@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -26,6 +27,15 @@ from recommender.schemas import (
 )
 
 app = FastAPI()
+origins = ['http://localhost:4200']
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 
 @app.get('/', status_code=200, response_model=Message)
@@ -37,16 +47,7 @@ def read_root():
     '/usuario/', status_code=HTTPStatus.CREATED, response_model=UserPublic
 )
 def criar_usuario(user: UserSchema, session: Session = Depends(get_session)):
-    db_user = session.scalar(
-        select(User).where((User.username == user.username))
-    )
-    if db_user:
-        if db_user.username == user.username:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail='Username already exists',
-            )
-    db_user = User(username=user.username, age=user.age, gender=user.gender)
+    db_user = User(age=user.age, gender=user.gender)
     session.add(db_user)
     session.commit()
     session.refresh(db_user)

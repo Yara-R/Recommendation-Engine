@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import date, datetime
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -69,9 +70,9 @@ def mock_db_time():
 @pytest.fixture
 def user(session):
     user = User(
-        username='Teste',
         age=30,
         gender='M',
+        uuid=uuid4(),
     )
     session.add(user)
     session.commit()

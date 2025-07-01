@@ -1,8 +1,8 @@
-"""empty message
+"""Initial schema
 
-Revision ID: d143932a8fb9
+Revision ID: 8dd3f551c621
 Revises: 
-Create Date: 2025-06-26 13:44:03.409541
+Create Date: 2025-07-01 13:30:52.814375
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd143932a8fb9'
+revision: str = '8dd3f551c621'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,18 +30,19 @@ def upgrade() -> None:
     )
     op.create_table('users',
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(), nullable=False),
     sa.Column('age', sa.Integer(), nullable=False),
     sa.Column('gender', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('uuid', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('user_id'),
-    sa.UniqueConstraint('username')
+    sa.UniqueConstraint('user_id'),
+    sa.UniqueConstraint('uuid')
     )
     op.create_table('sessions',
     sa.Column('session_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('start_time', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.Column('end_time', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('start_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('end_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('responses_count', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
     sa.PrimaryKeyConstraint('session_id')

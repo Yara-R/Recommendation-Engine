@@ -38,7 +38,6 @@ Este projeto implementa um sistema de recomendação inteligente de filmes basea
 
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
-- Make (opcional)
 
 ### ▶️ Instruções
 
@@ -61,19 +60,22 @@ O sistema utiliza dados de interações dos usuários com filmes para sugerir no
 
 * Filtragem colaborativa
 
-* Respostas dos usuários sobre os filmes assistidos (curtiu/não curtiu)
+* Respostas dos usuários sobre os filmes assistidos (já assistidos, não assistidos, gostaria de assistir)
 
 O modelo é continuamente atualizado conforme novos feedbacks são registrados.
 
 ---
 
 ## 📊 Visualização e Análise
+
 A análise dos dados e desempenho do modelo pode ser feita por meio de dashboards conectados ao banco de dados, como com o Power BI.
 
 ---
 
 ## 📝 Licença
+
 Este projeto está licenciado sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
 ## 🙋‍♀️ Autora
+
 Desenvolvido por [Yara Rodrigues](https://www.linkedin.com/in/yara-rodrigues-inacio/)

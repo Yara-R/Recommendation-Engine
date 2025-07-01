@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -96,15 +97,13 @@ def load_users_data():
             user_id = int(parts[0])
             age = int(parts[1])
             gender = parts[2]
-
-            # Criar username e email fictícios baseados no user_id
-            username = f'user_{user_id}'
+            uuid = uuid4()
 
             users_data.append({
                 'user_id': user_id,
-                'username': username,
                 'age': age,
                 'gender': gender,
+                'uuid': uuid,
             })
 
     return users_data
@@ -179,13 +178,13 @@ def insert_users(db_session, users_data):
     for user_data in users_data:
         try:
             user = User(
-                username=user_data['username'],
                 age=user_data['age'],
                 gender=user_data['gender'],
+                uuid=user_data['uuid'],
             )
             db_session.add(user)
         except Exception as e:
-            print(f'Erro ao inserir usuário {user_data["username"]}: {e}')
+            print(f'Erro ao inserir usuário {user_data["user_id"]}: {e}')
             print(f'Dados do usuário: {user_data}')
             raise
 
@@ -326,7 +325,7 @@ def verify_data():
         print('\n👤 Exemplo de usuários:')
         users = db_session.query(User).limit(3).all()
         for user in users:
-            print(f'- {user.username}')
+            print(f'- {user.user_id}')
 
         print('\n⭐ Exemplo de interações:')
         interactions = db_session.query(UserMovieInteraction).limit(3).all()
@@ -342,7 +341,7 @@ def verify_data():
                 .first()
             )
             print(
-                f'- {user.username} → {movie.title}: '
+                f'- {user.user_id} → {movie.title}: '
                 f'{interaction.response.value}'
             )
 
